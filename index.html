@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>TrustEarnX</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,system-ui,sans-serif;background:#070b2a;color:#fff}
+.app{max-width:520px;margin:auto;min-height:100vh;padding:18px 16px 90px;background:
+radial-gradient(circle at 20% 0%,#123cff55,transparent 35%),radial-gradient(circle at 100% 25%,#b400ff44,transparent 35%),#070b2a}
+.header{display:flex;align-items:center;justify-content:space-between}.brand{display:flex;gap:10px;align-items:center}
+.logo{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#08d9ff,#552cff,#d100ff);display:grid;place-items:center;font-weight:900;font-size:22px;box-shadow:0 0 22px #503dff77}
+h1{font-size:22px;margin:0}.muted{color:#aab0d2;font-size:13px}.card{background:#111735dd;border:1px solid #ffffff15;border-radius:20px;padding:18px;margin-top:16px;box-shadow:0 12px 35px #0005}
+.balance{font-size:36px;font-weight:800;margin:8px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stat{background:#0b1030;border-radius:15px;padding:13px}.stat b{display:block;font-size:20px;margin-top:5px}
+button{border:0;border-radius:14px;padding:13px 16px;font-weight:700;color:#fff;background:linear-gradient(90deg,#087dff,#8b20ff);width:100%;font-size:15px}
+button.secondary{background:#202852}button:disabled{opacity:.5}
+.task{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 0;border-bottom:1px solid #ffffff12}.task:last-child{border:0}
+.task button{width:auto;padding:10px 13px}.icon{width:42px;height:42px;border-radius:12px;background:#18204b;display:grid;place-items:center;font-size:20px}
+.taskinfo{flex:1}.taskinfo b{font-size:14px}.taskinfo span{display:block;color:#9ca6cc;font-size:12px;margin-top:4px}
+.nav{position:fixed;bottom:0;left:0;right:0;margin:auto;max-width:520px;display:grid;grid-template-columns:repeat(3,1fr);background:#0c1130ee;backdrop-filter:blur(14px);border-top:1px solid #ffffff12;padding:9px 12px 12px}
+.nav button{background:transparent;padding:9px;font-size:12px;color:#aeb6d8}.nav button.active{color:#fff}
+.pill{display:inline-block;padding:6px 9px;border-radius:99px;background:#16204a;color:#8ee9ff;font-size:12px}
+.ref{display:flex;gap:8px}.ref input{min-width:0;flex:1;background:#080d27;border:1px solid #ffffff15;color:#fff;border-radius:12px;padding:12px}
+.notice{font-size:12px;color:#9da7ce;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="brand"><div class="logo">TX</div><div><h1>TrustEarnX</h1><div class="muted">Watch Ads • Earn Rewards • Grow Together</div></div></div>
+    <span class="pill" id="userTag">Guest</span>
+  </div>
+
+  <section class="card">
+    <div class="muted">Available Balance</div>
+    <div class="balance"><span id="balance">0.00</span> <small style="font-size:16px;color:#9fa8ce">TX</small></div>
+    <div class="grid">
+      <div class="stat"><span class="muted">Today's Tasks</span><b id="tasks">0</b></div>
+      <div class="stat"><span class="muted">Referrals</span><b id="refs">0</b></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h3 style="margin-top:0">Earn Rewards</h3>
+    <div class="task">
+      <div class="icon">▶</div><div class="taskinfo"><b>Watch a demo ad</b><span>Earn 0.10 TX after completion</span></div>
+      <button onclick="watchAd(this)">Watch</button>
+    </div>
+    <div class="task">
+      <div class="icon">🎁</div><div class="taskinfo"><b>Daily bonus</b><span>Claim once per day</span></div>
+      <button onclick="daily(this)">Claim</button>
+    </div>
+    <p class="notice">Demo version: rewards shown here are local demo points. Connect your own ad/reward backend before using real withdrawals.</p>
+  </section>
+
+  <section class="card">
+    <h3 style="margin-top:0">Invite Friends</h3>
+    <p class="muted">Share your referral link and grow together.</p>
+    <div class="ref"><input id="refLink" readonly value="https://t.me/your_bot?start=ref"><button style="width:auto" onclick="copyRef()">Copy</button></div>
+  </section>
+
+  <section class="card">
+    <h3 style="margin-top:0">Withdraw</h3>
+    <p class="notice">Withdrawal is disabled in this starter demo. Add your verified payout system and server-side balance checks before enabling it.</p>
+    <button class="secondary" disabled>Withdraw</button>
+  </section>
+</div>
+
+<div class="nav">
+  <button class="active" onclick="scrollTo(0,0)">🏠<br>Home</button>
+  <button onclick="document.querySelector('.card:nth-of-type(2)').scrollIntoView({behavior:'smooth'})">🎯<br>Tasks</button>
+  <button onclick="document.querySelector('.card:nth-of-type(4)').scrollIntoView({behavior:'smooth'})">👥<br>Invite</button>
+</div>
+
+<script>
+let balance=Number(localStorage.getItem('tx_balance')||0);
+let tasks=Number(localStorage.getItem('tx_tasks')||0);
+let refs=Number(localStorage.getItem('tx_refs')||0);
+const tg=window.Telegram?.WebApp;
+if(tg){tg.ready();tg.expand(); const u=tg.initDataUnsafe?.user; if(u) document.getElementById('userTag').textContent=(u.first_name||'User').slice(0,14);}
+function render(){document.getElementById('balance').textContent=balance.toFixed(2);document.getElementById('tasks').textContent=tasks;document.getElementById('refs').textContent=refs;
+localStorage.setItem('tx_balance',balance);localStorage.setItem('tx_tasks',tasks);}
+function watchAd(btn){btn.disabled=true;btn.textContent='...';setTimeout(()=>{balance+=0.10;tasks++;btn.disabled=false;btn.textContent='Done';render();},2500)}
+function daily(btn){btn.disabled=true;balance+=0.25;tasks++;btn.textContent='Claimed';render();}
+function copyRef(){navigator.clipboard?.writeText(document.getElementById('refLink').value); if(tg?.showPopup) tg.showPopup({title:'Copied',message:'Referral link copied.'}); else alert('Referral link copied.');}
+render();
+</script>
+</body>
+</html>
